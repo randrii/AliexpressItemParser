@@ -10,10 +10,10 @@ import org.openqa.selenium.support.PageFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -24,14 +24,26 @@ public class DefaultLoaderService {
     inquireConnection();
 
     WebElement root = this.findItemSection();
-    List<WebElement> rawItems = findElementsByClassName(root, "_3t7zg");
-    log.info("There are {} items found", rawItems.size());
 
-    List<ProductItem> productItems = rawItems.stream().map(this::buildProductItem).collect(Collectors.toList());
+    List<ProductItem> items = new ArrayList<>();
+
+    for (int i = 0; i < 5; i++) {
+      List<WebElement> rawItems = findElementsByClassName(root, "_3t7zg");
+      rawItems.stream()
+              .skip(6 * i)
+              .limit(6)
+              .map(this::buildProductItem)
+              .forEach(items::add);
+
+      scrollPage();
+      root = findElementByClassName("_1nker");
+    }
+
+    log.info("There are {} items found", items.size());
 
     driver.close();
 
-    return productItems;
+    return items;
   }
 
   public void inquireConnection() {
