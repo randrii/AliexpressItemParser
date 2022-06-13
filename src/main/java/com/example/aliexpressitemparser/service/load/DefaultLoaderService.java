@@ -18,20 +18,21 @@ import java.util.concurrent.TimeUnit;
 @Service
 @Slf4j
 public class DefaultLoaderService {
+  public static final int ITEMS_IN_ROW = 6;
   @Autowired private WebDriver driver;
 
-  public List<ProductItem> inquireItems() {
+  public List<ProductItem> inquireItems(int limit) {
     inquireConnection();
 
     WebElement root = this.findItemSection();
 
-    List<ProductItem> items = new ArrayList<>();
+    List<ProductItem> items = new ArrayList<>(limit);
 
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < calculateIterationCount(limit); i++) {
       List<WebElement> rawItems = findElementsByClassName(root, "_3t7zg");
       rawItems.stream()
-              .skip(6 * i)
-              .limit(6)
+              .skip(ITEMS_IN_ROW * i)
+              .limit(calculateLimit(limit, i))
               .map(this::buildProductItem)
               .forEach(items::add);
 
@@ -44,6 +45,10 @@ public class DefaultLoaderService {
     driver.close();
 
     return items;
+  }
+
+  private long calculateLimit(int limit, int i) {
+    return limit / (ITEMS_IN_ROW * (i+1) ) > 0 ? ITEMS_IN_ROW : limit % ITEMS_IN_ROW;
   }
 
   public void inquireConnection() {
@@ -123,5 +128,10 @@ public class DefaultLoaderService {
     } else {
       return root;
     }
+  }
+
+  private int calculateIterationCount(int limit) {
+    int count = limit / ITEMS_IN_ROW;
+    return limit % ITEMS_IN_ROW > 0 ? ++count : count;
   }
 }
